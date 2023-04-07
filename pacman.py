@@ -41,6 +41,10 @@ class RenderGame:
     def handle_events(self):
         pass
 
+    def add_wall(self, obj):
+        self.add_game_object(obj)
+        self.walls.append(obj)
+
 
 class GameObject:
     def __init__(self, in_surface, x, y, input_size, input_color=(255,0,0), is_circle=False):
@@ -54,7 +58,7 @@ class GameObject:
         self.shape = pygame.Rect(x, y, input_size, input_size)
 
     def draw(self):
-        if self.circle:
+        if self.circle:  # render the object as either a circle or rectangle
             pygame.draw.circle(self.surface, self.color, self.x, self.y, self.size)
         else:
             rectangle = pygame.Rect(self.x, self.y, self.size, self.size)
@@ -67,4 +71,77 @@ class GameObject:
 class WallObject(GameObject):
     def __init__(self, input_surface, x, y, input_size, input_color=(0, 0, 255)):
         super().__init__(input_surface, x * input_size, y * input_size, input_size, input_color)
+# set the parameters for the wall class, the color of the walls is blue
 
+
+class GameController:
+    def __init__(self):
+        self.ascii_maze = [
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+            "XP           XX            X",
+            "X XXXX XXXXX XX XXXXX XXXX X",
+            "X XXXXOXXXXX XX XXXXXOXXXX X",
+            "X XXXX XXXXX XX XXXXX XXXX X",
+            "X                          X",
+            "X XXXX XX XXXXXXXX XX XXXX X",
+            "X XXXX XX XXXXXXXX XX XXXX X",
+            "X      XX    XX    XX      X",
+            "XXXXXX XXXXX XX XXXXX XXXXXX",
+            "XXXXXX XXXXX XX XXXXX XXXXXX",
+            "XXXXXX XX     G    XX XXXXXX",
+            "XXXXXX XX XXX  XXX XX XXXXXX",
+            "XXXXXX XX X      X XX XXXXXX",
+            "   G      X      X          ",
+            "XXXXXX XX X      X XX XXXXXX",
+            "XXXXXX XX XXXXXXXX XX XXXXXX",
+            "XXXXXX XX    G     XX XXXXXX",
+            "XXXXXX XX XXXXXXXX XX XXXXXX",
+            "XXXXXX XX XXXXXXXX XX XXXXXX",
+            "X            XX            X",
+            "X XXXX XXXXX XX XXXXX XXXX X",
+            "X XXXX XXXXX XX XXXXX XXXX X",
+            "X   XX       G        XX   X",
+            "XXX XX XX XXXXXXXX XX XX XXX",
+            "XXX XX XX XXXXXXXX XX XX XXX",
+            "X      XX    XX    XX      X",
+            "X XXXXXXXXXX XX XXXXXXXXXX X",
+            "X XXXXXXXXXX XX XXXXXXXXXX X",
+            "X   O                 O    X",
+            "XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        ]  # X = wall, P = pac-man, G = ghost
+        # initialize the maze in ascii chars to later convert to a np maze
+        self.numpy_maze = []  # use to convert maze where 0 is wall and 1 is free space
+        self.cookie_spaces = []
+        self.reachable_spaces = []  # holds the passable parts of the array
+        self.ghost_spawns = []
+
+        self.size = (0, 0)
+        self.convert_maze_to_np()
+
+    def convert_maze_to_np(self):
+        for x, row in enumerate(self.ascii_maze):
+            self.size = (len(row), x+1)
+            binary_row = []
+            for y, col in enumerate(row):
+                if col == "G":
+                    self.ghost_spawns.append((y, x))
+                elif col == "X":
+                    binary_row.append(0)
+                else:
+                    binary_row.append(1)
+                    self.cookie_spaces.append((y, x))
+                    self.reachable_spaces.append((y, x))
+            self.numpy_maze.append(binary_row)
+
+
+if __name__ == "__main__":
+    size = 32
+    game_object = GameController()
+    game_size = game_object.size
+    rendering = RenderGame(game_size[0] * size, game_size[1] * size)
+
+    for y, row in enumerate(game_object.numpy_maze):
+        for x, col in enumerate(row):
+            if col == 0:
+                rendering.add_wall(WallObject(rendering, x, y, size))
+    rendering.tick(120)
