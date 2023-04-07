@@ -5,6 +5,14 @@ import random
 from enum import Enum
 
 
+class Directions(Enum):
+    Nothing = 360
+    Left = 180
+    Up = 90
+    Down = -90
+    Right = 0
+
+
 class RenderGame:
     def __init__(self, input_width, input_height):
         pygame.init()
@@ -132,6 +140,17 @@ class GameController:
                     self.cookie_spaces.append((y, x))
                     self.reachable_spaces.append((y, x))
             self.numpy_maze.append(binary_row)
+
+
+class Movers(GameObject):
+    def __init__(self, input_surface, x, y, input_size, input_color=(255,0,0), is_circle=False):
+        super().__init__(input_surface, x, y, input_size, input_color, is_circle)
+
+
+class Ghost(Movers):
+    def __init__(self, input_surface, x, y, input_size, game_controller, sprites="images/fright.png"):
+        super().init
+
 
 
 if __name__ == "__main__":
