@@ -6,6 +6,9 @@ from enum import Enum
 
 
 class Directions(Enum):
+    """
+    Directions characters can move in the game.
+    """
     Nothing = 360
     Left = 180
     Up = 90
@@ -13,31 +16,57 @@ class Directions(Enum):
     Right = 0
 
 
-# functions to convert from our ascii/numpy maze to the pygame screen and vice versa
-
-
 def maze_to_screen(input_coords, input_size=32):
+    """
+    Convert a maze coordinate to a pygame screen coordinate.
+
+    :param input_coords: coordinates of the maze ascii table
+    :param input_size: factor to multiply the coordinates by
+    :return: tuple of the converted coordinates
+    """
     return input_coords[0] * input_size, input_coords[1] * input_size
 
 
 def screen_to_maze(input_coords, input_size=32):
+    """
+    Converts a pygame screen coordinate to a maze coordinate.
+    :param input_coords: coordinates of a character or object in the pygame screen.
+    :param input_size: factor to divide the coordinates by
+    :return: a tuple for the x, y coordinates for the maze ascii table of type int
+    """
     return int(input_coords[0] / input_size), int(input_coords[1] / input_size)
 
 
 class RenderGame:
+    """
+    Class to Render the pygame screen.
+    """
     def __init__(self, input_width, input_height):
+        """
+        Initialize all the parameters needed for this class. Some features include:
+        clock that is set to the pygame clock,
+        screen which is set to the width and height from the pygame display class
+        :param input_width: width of the game screen
+        :param input_height: height of the game screen
+        """
         pygame.init()
-        self.width = input_width  # set the width and height to parameters
-        self.height = input_height  # that are passed in
+        self.width = input_width
+        self.height = input_height
         self.screen = pygame.display.set_mode((self.width, self.height))
-        pygame.display.set_caption("Pacman")  # set caption of the game to "Pacman"
-        self.clock = pygame.time.Clock()  # keeps track of the time
+        pygame.display.set_caption("Pacman")
+        self.clock = pygame.time.Clock()
         self.cookies = []
         self.game_objects = []
         self.walls = []
         self.done_running = False
 
     def tick(self, frames_per_sec):
+        """
+        Continue to render the game while the game isn't running. When game ends
+        print end of game on screen.
+        :param frames_per_sec: parameter for how fast to tick the game.
+        :return: Returns Nothing
+        """
         black = (0, 0, 0)  # initialize the black color according to its RGB values
         while not self.done_running:
             for object in self.game_objects:
@@ -51,24 +80,38 @@ class RenderGame:
         print("Game Over ...")
 
     def add_game_object(self, obj):
+        """
+        Add a game object (wall, character, anything else) to the game.
+        :param obj: item to add to the game_objects list
+        """
         self.game_objects.append(obj)
 
-    def add_wall_to_game(self, obj):
-        self.add_game_object(obj)
-        self.walls.append(obj)
-
     def handle_events(self):
+        """
+        TODO
+        """
         pass
 
     def add_wall(self, obj):
+        """
+        Add a wall to the game and append it to the walls list.
+        :param obj: Wall type
+        """
         self.add_game_object(obj)
         self.walls.append(obj)
 
     def get_walls(self):
+        """
+        Accessor function to return the walls list.
+        :return: walls list
+        """
         return self.walls
 
 
 class GameObject:
+    """
+
+    """
     def __init__(self, in_surface, x, y, input_size, input_color=(255,0,0), is_circle=False):
         self.size = input_size
         self.renderer: RenderGame = in_surface
@@ -94,13 +137,30 @@ class GameObject:
 
 
 class WallObject(GameObject):
+    """
+    Class to handle Wall objects. Inherited from the GameObject class.
+    """
     def __init__(self, input_surface, x, y, input_size, input_color=(0, 0, 255)):
+        """
+        Initializer function.
+        :param input_surface: takes care of rendering on the game's surface
+        :param x: position on the game
+        :param y: position on the game
+        :param input_size: size of the walls
+        :param input_color: color of the walls, initially set to blue
+        """
         super().__init__(input_surface, x * input_size, y * input_size, input_size, input_color)
-# set the parameters for the wall class, the color of the walls is blue
 
 
 class GameController:
+    """
+    Controls the game and where characters can go. Holds the mazes in ascii and numpy version.
+    """
     def __init__(self):
+        """
+        Initializes the various mazes needed for pathfinding. Holds lists for the
+        types of ghosts, cookies, and open spaces in the maze.
+        """
         self.ascii_maze = [
             "XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
             "XP           XX            X",
@@ -134,7 +194,6 @@ class GameController:
             "X   O                 O    X",
             "XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
         ]  # X = wall, P = pac-man, G = ghost
-        # initialize the maze in ascii chars to later convert to a np maze
         self.numpy_maze = []  # use to convert maze where 0 is wall and 1 is free space
         self.cookie_spaces = []
         self.reachable_spaces = []  # holds the passable parts of the array
@@ -150,6 +209,10 @@ class GameController:
         self.convert_maze_to_np()
 
     def convert_maze_to_np(self):
+        """
+        Converts the ascii maze above to a numpy maze for easy pathfinding.
+        :return: Returns Nothing, but fills the numpy maze with 0's (walls) and 1's (free space).
+        """
         for x, row in enumerate(self.ascii_maze):
             self.size = (len(row), x+1)
             binary_row = []
@@ -166,7 +229,21 @@ class GameController:
 
 
 class Movers(GameObject):
+    """
+    Movable Objects that inherits from the GameObject class. Functions to take care of movements
+    """
     def __init__(self, input_surface, x, y, input_size, input_color=(255,0,0), is_circle=False):
+        """
+        Initializes various values needed for movable objects in the game.
+        Sets directional values for each movable object so that it can move through the maze.
+        Makes use of the enum Directions class.
+        :param input_surface: initializes the object on the game surface
+        :param x: starting x coordinate for the object
+        :param y: starting y coordinate for the object
+        :param input_size: size of the object
+        :param input_color: color of the object (initially set to red)
+        :param is_circle: whether the object is a circle or not
+        """
         super().__init__(input_surface, x, y, input_size, input_color, is_circle)
         self.curr_direction = Directions.Nothing
         self.dir_buffer = Directions.Nothing
@@ -176,15 +253,29 @@ class Movers(GameObject):
         self.image = pygame.image.load("images/ghosts.png")
 
     def get_next_location(self):
+        """
+        Accessor to retrieve the next location for an object that is moving through the game.
+        :return: Nothing if the object's queue is empty, else return its next destination
+        """
         if len(self.location_queue) == 0:
             return None
         self.location_queue.pop(0)
 
     def set_direction(self, input_direction):
+        """
+        Mutator to set the current direction of the object to the parameter passed in.
+        :param input_direction: Directions type that tells the object where to go
+        """
         self.curr_direction = input_direction
         self.dir_buffer = input_direction
 
-    def wall_collision(self, input_position):  # function to check if a character collides with a wall
+    def wall_collision(self, input_position):
+        """
+        Checks whether the object has collided with any of the walls in the game.
+        Loops through all the walls and creates a Rect object from the pygame library.
+        :param input_position: Current position of the object
+        :return: Boolean value of whether the object collides with a wall or not
+        """
         collision_location = pygame.Rect(input_position[0], input_position[1], self.size, self.size)
         is_collision = False
         walls = self.renderer.get_walls()
@@ -196,10 +287,22 @@ class Movers(GameObject):
 
 
 class Ghost(Movers):
+    """
+    Ghost class for the ghosts in the game that inherits from the Movers class above,
+    since ghosts are also movable objects in this game.
+    """
     def __init__(self, input_surface, x, y, input_size, game_controller, input_color=(255, 0, 0)):
+        """
+        Initializer function for a ghost object
+        :param input_surface: creates the ghost on the pygame surface
+        :param x: x coordinate of the ghost
+        :param y: y coordinate of the ghost
+        :param input_size: size of the ghost
+        :param game_controller:
+        :param input_color: color of the ghost (initialized to red)
+        """
         super().__init__(input_surface, x, y, input_size, input_color, False)
         self.game_controller = game_controller
-
 
 
 if __name__ == "__main__":
