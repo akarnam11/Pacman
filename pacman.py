@@ -13,6 +13,9 @@ class Directions(Enum):
     Right = 0
 
 
+# functions to convert from our ascii/numpy maze to the pygame screen and vice versa
+
+
 def maze_to_screen(input_coords, input_size=32):
     return input_coords[0] * input_size, input_coords[1] * input_size
 
