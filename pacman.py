@@ -207,6 +207,20 @@ class GameController:
 
         self.size = (0, 0)
         self.convert_maze_to_np()
+        self.pathfinder = PathFinder(self.numpy_maze)
+
+    def generate_random_path(self, ghost):
+        """
+        Function to generate a random path for each ghost in the game using the pathfinder class.
+        :param ghost: ghost object
+        :return: Nothing, sets the new path for a given ghost
+        """
+        random_coord = random.choice(self.reachable_spaces)
+        current_coord = screen_to_maze(ghost.get_position())
+        path = self.pathfinder.get_path(current_coord[1], current_coord[0], random_coord[1],
+                                        random_coord[0])
+        new_path = [maze_to_screen(item) for item in path]
+        ghost.set_new_path(new_path)
 
     def convert_maze_to_np(self):
         """
@@ -259,7 +273,7 @@ class Movers(GameObject):
         """
         if len(self.location_queue) == 0:
             return None
-        self.location_queue.pop(0)
+        return self.location_queue.pop(0)
 
     def set_direction(self, input_direction):
         """
@@ -304,6 +318,25 @@ class Ghost(Movers):
         super().__init__(input_surface, x, y, input_size, input_color, False)
         self.game_controller = game_controller
 
+    def reached_target_location(self):
+        """
+        If the ghost has reached its target destination, set its destination to somewhere new.
+        Calculate the direction in which it needs to go.
+        """
+        if (self.x, self.y) == self.next_target:
+            self.next_target = self.get_next_location()
+        self.curr_direction = self.calc_dir_to_next_target()
+
+    def set_new_path(self, input_path):
+        """
+        
+        :param input_path:
+        :return:
+        """
+        for i in input_path:
+            self.location_queue.append(i)
+        self.next_target = self.get_next_location()
+
 
 class PathFinder:
     """
@@ -329,6 +362,7 @@ class PathFinder:
         """
         path = self.path_found.get_path(from_x, from_y, to_x, to_y)
         return [(sub[1], sub[0]) for sub in path]
+
 
 if __name__ == "__main__":
     size = 32
