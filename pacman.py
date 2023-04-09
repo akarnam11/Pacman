@@ -305,6 +305,31 @@ class Ghost(Movers):
         self.game_controller = game_controller
 
 
+class PathFinder:
+    """
+    Uses the A* algorithm to find the shortest path from one location to another
+    within the numpy maze. Makes use of the tcod library that contains the A* algorithm
+    """
+    def __init__(self, input_array):
+        """
+        Initializes the cost and path found for a certain object in the game.
+        :param input_array: input array for a specific ghost in the game.
+        """
+        cost = np.array(input_array, dtype=np.bool_).tolist()
+        self.path_found = tcod.path.AStar(cost=cost, diagonal=0)
+
+    def get_path(self, from_x, from_y, to_x, to_y):
+        """
+        Calculate and return the path as a series of steps.
+        :param from_x: x coordinate of the maze
+        :param from_y: y coordinate of the maze
+        :param to_x: x coordinate to go to
+        :param to_y: y coordinate to go to
+        :return: series of paths to get from one location in the maze to another
+        """
+        path = self.path_found.get_path(from_x, from_y, to_x, to_y)
+        return [(sub[1], sub[0]) for sub in path]
+
 if __name__ == "__main__":
     size = 32
     game_object = GameController()
