@@ -16,6 +16,23 @@ class Directions(Enum):
     Right = 0
 
 
+class GhostMoves(Enum):
+    """
+    Options for Ghost behavior in the game.
+    """
+    Chase = 1
+    Scatter = 0
+
+
+class PointTypes(Enum):
+    """
+    Point increases for the main character in the game. 
+    """
+    Cookies = 10
+    PowerUp = 50
+    Ghost = 400
+
+
 def maze_to_screen(input_coords, input_size=32):
     """
     Convert a maze coordinate to a pygame screen coordinate.
@@ -329,7 +346,7 @@ class Ghost(Movers):
 
     def set_new_path(self, input_path):
         """
-        
+
         :param input_path:
         :return:
         """
