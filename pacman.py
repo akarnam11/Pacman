@@ -26,7 +26,7 @@ class GhostMoves(Enum):
 
 class PointTypes(Enum):
     """
-    Point increases for the main character in the game. 
+    Point increases for the main character in the game.
     """
     Cookies = 10
     PowerUp = 50
@@ -353,6 +353,22 @@ class Ghost(Movers):
         for i in input_path:
             self.location_queue.append(i)
         self.next_target = self.get_next_location()
+
+
+class Cookies(GameObject):
+    """
+    For cookies in the game.
+    """
+    def __init__(self, input_surface, x, y):
+        super().__init__(input_surface, x, y, 4, (255, 255, 0), True)
+
+
+class PowerUp(GameObject):
+    """
+    Used for powerups in the game.
+    """
+    def __init__(self, input_surface, x, y):
+        super().__init__(input_surface, x, y, 8, (255, 255, 255), True)
 
 
 class PathFinder:
