@@ -72,10 +72,28 @@ class RenderGame:
         self.screen = pygame.display.set_mode((self.width, self.height))
         pygame.display.set_caption("Pacman")
         self.clock = pygame.time.Clock()
+
         self.cookies = []
+        self.powerups = []
         self.game_objects = []
         self.walls = []
+
+        self.lives = 3
+        self.score = 0
+        self.curr_phase = 0
+        self.cookie_pickup_score = PointTypes.Cookies
+        self.powerup_score = PointTypes.PowerUp
+        self.ghost_eaten_score = PointTypes.Ghost
+        self.activated_special_ability = False
+        self.curr_mode = GhostMoves.Scatter
+        self.modes = [
+            (7, 20),
+            (7, 20),
+            (5, 20),
+            (5, 999999)
+        ]
         self.done_running = False
+        self.won_game = False
 
     def tick(self, frames_per_sec):
         """
@@ -322,7 +340,7 @@ class Ghost(Movers):
     Ghost class for the ghosts in the game that inherits from the Movers class above,
     since ghosts are also movable objects in this game.
     """
-    def __init__(self, input_surface, x, y, input_size, game_controller, input_color=(255, 0, 0)):
+    def __init__(self, input_surface, x, y, input_size, game_controller, sprite_path="images/fright.png"):
         """
         Initializer function for a ghost object
         :param input_surface: creates the ghost on the pygame surface
@@ -330,10 +348,12 @@ class Ghost(Movers):
         :param y: y coordinate of the ghost
         :param input_size: size of the ghost
         :param game_controller:
-        :param input_color: color of the ghost (initialized to red)
+        :param sprite_path: image to load the sprite ghost
         """
-        super().__init__(input_surface, x, y, input_size, input_color, False)
+        super().__init__(input_surface, x, y, input_size)
         self.game_controller = game_controller
+        self.normal_sprite = pygame.image.load(sprite_path)
+        self.fright_sprite = pygame.image.load(sprite_path)
 
     def reached_target_location(self):
         """
@@ -346,18 +366,33 @@ class Ghost(Movers):
 
     def set_new_path(self, input_path):
         """
-
-        :param input_path:
-        :return:
+        Set the ghost on a new path. Edits the ghost's next target and appends
+        to the location queue for ghosts to move next.
+        :param input_path: path for new ghost to go through.
         """
         for i in input_path:
             self.location_queue.append(i)
         self.next_target = self.get_next_location()
 
+    def calc_dir_to_next_target(self):
+        """
+        TODO
+        :return:
+        """
+        pass
+
+    def request_path_to_player(self, input_ghost):
+        """
+
+        :param input_ghost:
+        :return:
+        """
+
+
 
 class Cookies(GameObject):
     """
-    For cookies in the game.
+    For cookies in the game inheriting from the game object class.
     """
     def __init__(self, input_surface, x, y):
         super().__init__(input_surface, x, y, 4, (255, 255, 0), True)
@@ -365,7 +400,7 @@ class Cookies(GameObject):
 
 class PowerUp(GameObject):
     """
-    Used for powerups in the game.
+    Used for powerups in the game inheriting from the game object class.
     """
     def __init__(self, input_surface, x, y):
         super().__init__(input_surface, x, y, 8, (255, 255, 255), True)
