@@ -81,6 +81,19 @@ class GameObject:
     def get_shape(self):
         return pygame.Rect(self.x, self.y, self.size, self.size)
 
+    def set_position(self, input_x, input_y):
+        """
+        Sets the object's position.
+        :param input_x: x coordinate
+        :param input_y: y coordinate
+        :return: Nothing
+        """
+        self.x = input_x
+        self.y = input_y
+
+    def get_position(self):
+        return self.x, self.y
+
 
 class RenderGame:
     """
@@ -444,6 +457,36 @@ class Ghost(Movers):
         :param input_ghost:
         :return:
         """
+
+
+class Hero(Movers):
+    def __init__(self, input_surface, x, y, input_size):
+        """
+
+        :param input_surface:
+        :param x:
+        :param y:
+        :param input_size:
+        """
+        super().__init__(input_surface, x, y, input_size, (255, 255, 0), False)
+        self.last_position = (0, 0)
+        self.image = pygame.image.load("images/pac.png")
+        self.closed = pygame.image.load("images/jr_pac.png")
+        self.open = self.image
+        self.mouth_is_open = True
+
+    def tick(self):
+        """
+
+        :return:
+        """
+        if self.x < 0:
+            self.x = self.renderer.width
+
+        if self.x > self.renderer.width:
+            self.x = 0
+        self.last_position = self.get_position()
+        # TODO
 
 
 
