@@ -263,7 +263,7 @@ class RenderGame:
     def handle_mode_switch(self):
         """
         Find the current mode that the game is running then switch the mode based on the current phase.
-        Set the timer using the timing that the game is going to be running under. 
+        Set the timer using the timing that the game is going to be running under.
         """
         curr_phase_timings = self.modes[self.curr_phase]
         print(f"Current Phase: {str(self.curr_phase)}, Current Phase Timings: {str(curr_phase_timings)}")
@@ -282,7 +282,6 @@ class RenderGame:
             used_timing = chase_timing
         pygame.time.set_timer(self.mode_switch_event, used_timing * 1000)
 
-
     def handle_events(self):
         """
         Loop through the events in the game using the pygame.event.get() function and perform
@@ -299,6 +298,18 @@ class RenderGame:
                 if self.hero is None:
                     break
                 self.hero.mouth_is_open = not self.hero.mouth_is_open
+
+        press = pygame.key.get_pressed()
+        if self.hero is None:
+            return
+        if press[pygame.K_UP]:  # sets direction based on what key was pressed in the game
+            self.hero.set_direction(Directions.Up)
+        elif press[pygame.K_LEFT]:
+            self.hero.set_direction(Directions.Left)
+        elif press[pygame.K_RIGHT]:
+            self.hero.set_direction(Directions.Right)
+        elif press[pygame.K_DOWN]:
+            self.hero.set_direction(Directions.Down)
 
     def add_wall(self, obj):
         """
@@ -509,6 +520,47 @@ class Movers(GameObject):
                 break
         return is_collision
 
+    def check_collision_in_direction(self, input_direction: Directions):
+        """
+        Checks the direction the object is trying to move and updates its desired position.
+        :param input_direction: direction that the character wants to move in
+        :return: call to wall_collision and the desired position
+        """
+        desired_pos = (0, 0)
+        if input_direction == Directions.Nothing:
+            return False, desired_pos
+        if input_direction == Directions.Up:
+            desired_pos = (self.x, self.y - 1)
+        elif input_direction == Directions.Down:
+            desired_pos = (self.x, self.y + 1)
+        elif input_direction == Directions.Left:
+            desired_pos = (self.x - 1, self.y)
+        elif input_direction == Directions.Right:
+            desired_pos = (self.x + 1, self.y)
+
+        return self.wall_collision(desired_pos), desired_pos
+
+    def auto_move(self, input_direction: Directions):
+        """
+        Placeholder function for other classes to inherit from.
+        :param input_direction: Directions variable.
+        """
+        pass
+
+    def tick(self):
+        self.reached_target()
+        self.auto_move(self.curr_direction)
+
+    def reached_target(self):
+        """
+        Placeholder function.
+        """
+        pass
+
+    def draw(self):
+        self.image = pygame.transform.scale(self.image, (32, 32))
+        self.surface.blit(self.image, self.get_shape())
+
 
 class Ghost(Movers):
     """
@@ -592,7 +644,6 @@ class Hero(Movers):
             self.x = 0
         self.last_position = self.get_position()
         # TODO
-
 
 
 class Cookies(GameObject):
