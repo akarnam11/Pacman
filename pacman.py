@@ -619,11 +619,11 @@ class Ghost(Movers):
 class Hero(Movers):
     def __init__(self, input_surface, x, y, input_size):
         """
-
-        :param input_surface:
-        :param x:
-        :param y:
-        :param input_size:
+        Initialization function that inherits from the Movers class.
+        :param input_surface: surface for making the initialization from the Movable Object class.
+        :param x: x coordinate
+        :param y: y coordinate
+        :param input_size: size of character
         """
         super().__init__(input_surface, x, y, input_size, (255, 255, 0), False)
         self.last_position = (0, 0)
@@ -634,8 +634,9 @@ class Hero(Movers):
 
     def tick(self):
         """
-
-        :return:
+        Check if the position is within the boundaries of the screen. Move the object in the direction
+        if there are no objections, and check for collisions.
+        :return: Nothing, make calls to handle cookie pickup and ghosts.
         """
         if self.x < 0:
             self.x = self.renderer.width
@@ -643,7 +644,67 @@ class Hero(Movers):
         if self.x > self.renderer.width:
             self.x = 0
         self.last_position = self.get_position()
-        # TODO
+
+        if self.check_collision_in_direction(self.dir_buffer)[0]:
+            self.auto_move(self.curr_direction)
+        else:
+            self.auto_move(self.dir_buffer)
+            self.curr_direction = self.dir_buffer
+
+        if self.wall_collision((self.x, self.y)):
+            self.set_position(self.last_position[0], self.last_position[1])
+
+        self.handle_cookies()
+        self.handle_ghosts()
+
+    def auto_move(self, input_direction: Directions):
+        """
+        If there are no collisions, then update the last working direction to the current direction.
+        Else set the current direction to the last working direction
+        :param input_direction: current direction character is moving
+        """
+        collision_res = self.check_collision_in_direction(input_direction)
+        desired_pos_collides = collision_res[0]
+        if not desired_pos_collides:
+            self.last_working_dir = self.curr_direction
+            desired_pos = collision_res[1]
+            self.set_position(desired_pos[0], desired_pos[1])
+        else:
+            self.curr_direction = self.last_working_dir
+
+    def handle_cookies(self):
+        """
+        Get the cookies, powerups, and game objects. If the character collides with a cookie,
+        then remove that cookie from the screen and game objects, and add points to the game score.
+        Loop through the powerups and if the character collides with a powerup,
+        remove that powerup from the game objects and increase the game score. Activate the
+        character's special ability. 
+        :return:
+        """
+        collision_rect = pygame.Rect(self.x, self.y, self.size, self.size)
+        renderer = self.renderer
+        cookies = renderer.get_cookies()
+        powerups = renderer.get_powerups()
+        game_objs = renderer.get_game_objects()
+        cookie_to_remove = None
+        for c in cookies:
+            collides = collision_rect.colliderect(c.get_shape())
+            if collides and c in game_objs:
+                game_objs.remove(c)
+                renderer.add_score(PointTypes.Cookies)
+                cookie_to_remove = c
+        if cookie_to_remove is not None:
+            cookies.remove(cookie_to_remove)
+
+        if len(self.renderer.get_cookies()) == 0:
+            renderer.set_game_won()
+        for p in powerups:
+            collides = collision_rect.colliderect(p.get_shape())
+            if collides and p in game_objs:
+                if not self.renderer.is_special_ability_active():
+                    game_objs.remove(p)
+                    renderer.add_score(PointTypes.PowerUp)
+                    self.renderer.activate_special_ability()
 
 
 class Cookies(GameObject):
