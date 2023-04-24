@@ -54,95 +54,6 @@ def screen_to_maze(input_coords, input_size=32):
     return int(input_coords[0] / input_size), int(input_coords[1] / input_size)
 
 
-class RenderGame:
-    """
-    Class to Render the pygame screen.
-    """
-    def __init__(self, input_width, input_height):
-        """
-        Initialize all the parameters needed for this class. Some features include:
-        clock that is set to the pygame clock,
-        screen which is set to the width and height from the pygame display class
-        :param input_width: width of the game screen
-        :param input_height: height of the game screen
-        """
-        pygame.init()
-        self.width = input_width
-        self.height = input_height
-        self.screen = pygame.display.set_mode((self.width, self.height))
-        pygame.display.set_caption("Pacman")
-        self.clock = pygame.time.Clock()
-
-        self.cookies = []
-        self.powerups = []
-        self.game_objects = []
-        self.walls = []
-
-        self.lives = 3
-        self.score = 0
-        self.curr_phase = 0
-        self.cookie_pickup_score = PointTypes.Cookies
-        self.powerup_score = PointTypes.PowerUp
-        self.ghost_eaten_score = PointTypes.Ghost
-        self.activated_special_ability = False
-        self.curr_mode = GhostMoves.Scatter
-        self.modes = [
-            (7, 20),
-            (7, 20),
-            (5, 20),
-            (5, 999999)
-        ]
-        self.done_running = False
-        self.won_game = False
-
-    def tick(self, frames_per_sec):
-        """
-        Continue to render the game while the game isn't running. When game ends
-        print end of game on screen.
-        :param frames_per_sec: parameter for how fast to tick the game.
-        :return: Returns Nothing
-        """
-        black = (0, 0, 0)  # initialize the black color according to its RGB values
-        while not self.done_running:
-            for object in self.game_objects:
-                object.tick()
-                object.draw()
-
-            pygame.display.flip()
-            self.clock.tick(frames_per_sec)
-            self.screen.fill(black)
-            self.handle_events()
-        print("Game Over ...")
-
-    def add_game_object(self, obj):
-        """
-        Add a game object (wall, character, anything else) to the game.
-        :param obj: item to add to the game_objects list
-        """
-        self.game_objects.append(obj)
-
-    def handle_events(self):
-        """
-        TODO
-        """
-        pass
-
-    def add_wall(self, obj):
-        """
-        Add a wall to the game and append it to the walls list.
-        :param obj: Wall type
-        """
-        self.add_game_object(obj)
-        self.walls.append(obj)
-
-    def get_walls(self):
-        """
-        Accessor function to return the walls list.
-        :return: walls list
-        """
-        return self.walls
-
-
 class GameObject:
     """
 
@@ -169,6 +80,152 @@ class GameObject:
 
     def get_shape(self):
         return pygame.Rect(self.x, self.y, self.size, self.size)
+
+
+class RenderGame:
+    """
+    Class to Render the pygame screen.
+    """
+    def __init__(self, input_width, input_height):
+        """
+        Initialize all the parameters needed for this class. Some features include:
+        clock that is set to the pygame clock,
+        screen which is set to the width and height from the pygame display class
+        :param input_width: width of the game screen
+        :param input_height: height of the game screen
+        """
+        pygame.init()
+        self.width = input_width
+        self.height = input_height
+        self.screen = pygame.display.set_mode((self.width, self.height))
+        pygame.display.set_caption("Pacman")
+        self.clock = pygame.time.Clock()
+
+        self.cookies = []
+        self.powerups = []
+        self.game_objects = []
+        self.walls = []
+        self.ghosts = []
+        self.hero: Hero = None
+
+        self.lives = 3
+        self.score = 0
+        self.curr_phase = 0
+        self.cookie_pickup_score = PointTypes.Cookies
+        self.powerup_score = PointTypes.PowerUp
+        self.ghost_eaten_score = PointTypes.Ghost
+        self.activated_special_ability = False
+        self.curr_mode = GhostMoves.Scatter
+        self.mode_switch_event = pygame.USEREVENT + 1
+        self.end_event = pygame.USEREVENT + 2
+        self.paku_event = pygame.USEREVENT + 3
+        self.modes = [
+            (7, 20),
+            (7, 20),
+            (5, 20),
+            (5, 999999)
+        ]
+        self.done_running = False
+        self.won_game = False
+
+    def tick(self, frames_per_sec):
+        """
+        Continue to render the game while the game isn't running. When game ends
+        print end of game on screen.
+        :param frames_per_sec: parameter for how fast to tick the game.
+        :return: Returns Nothing
+        """
+        black = (0, 0, 0)  # initialize the black color according to its RGB values
+        while not self.done_running:
+            for game_obj in self.game_objects:
+                game_obj.tick()
+                game_obj.draw()
+
+            self.display_text(f"[Score: {self.score}]   [Lives: {self.lives}]")
+
+            if self.hero is None:
+                self.display_text("You Died", (self.width / 2 - 256, self.height / 2 - 256), 100)
+            if self.won_game:
+                self.display_text("You Won", (self.width / 2 - 256, self.height / 2 - 256), 100)
+            pygame.display.flip()
+            self.clock.tick(frames_per_sec)
+            self.screen.fill(black)
+            self.handle_events()
+        print("Game Over ...")
+
+    def start_end_game_timeout(self):
+        """
+        Sets a timer for the game to end.
+        :return: Nothing
+        """
+        pygame.time.set_timer(self.end_event, 15000)  # ends the game in 15 secs
+
+    def add_game_object(self, obj: GameObject):
+        """
+        Add a game object (wall, character, anything else) to the game.
+        :param obj: item to add to the game_objects list, from the GameObject class
+        """
+        self.game_objects.append(obj)
+
+    def add_cookie(self, obj: GameObject):
+        """
+        Appends a new cookie to the list of cookies.
+        :param obj: a GameObject that details a cookie.
+        :return: Nothing
+        """
+        self.game_objects.append(obj)
+        self.cookies.append(obj)
+
+    def add_powerup(self, obj: GameObject):
+        """
+        Appends a new powerup to the list of game objects and powerups.
+        :param obj: a GameObject that details a powerup.
+        :return: Nothing
+        """
+        self.game_objects.append(obj)
+        self.powerups.append(obj)
+
+    def add_ghost(self, obj: GameObject):
+        """
+        Appends a new ghost to the list of game objects and ghosts.
+        :param obj: a GameObject that details a cookie.
+        :return: Nothing
+        """
+        self.game_objects.append(obj)
+        self.ghosts.append(obj)
+
+    def handle_events(self):
+        """
+        TODO
+        """
+        pass
+
+    def add_wall(self, obj):
+        """
+        Add a wall to the game and append it to the walls list.
+        :param obj: Wall type
+        """
+        self.add_game_object(obj)
+        self.walls.append(obj)
+
+    def get_walls(self):
+        """
+        Accessor function to return the walls list.
+        :return: walls list
+        """
+        return self.walls
+
+    def display_text(self, text, input_position=(32, 0), input_size=30):
+        """
+        Displays text on the game's screen.
+        :param text: text to be displayed
+        :param input_position: position on screen for text to be displayed
+        :param input_size: size of text to be displayed
+        :return: Nothing
+        """
+        font = pygame.font.SysFont('arial', input_size)
+        text_surface = font.render(text, False, (255, 255, 255))
+        self.screen.blit(text_surface, input_position)  # places an image onto the screen of pygame application
 
 
 class WallObject(GameObject):
