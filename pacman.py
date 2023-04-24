@@ -20,8 +20,8 @@ class GhostMoves(Enum):
     """
     Options for Ghost behavior in the game.
     """
-    Chase = 1
-    Scatter = 0
+    Chase = 0
+    Scatter = 1
 
 
 class PointTypes(Enum):
@@ -173,12 +173,56 @@ class RenderGame:
         """
         pygame.time.set_timer(self.end_event, 15000)  # ends the game in 15 secs
 
+    def activate_special_ability(self):
+        """
+        Activates special ability and changes the game mode to have the ghosts scatter.
+        Starts the end game timer.
+        """
+        self.activated_special_ability = True
+        self.set_curr_mode(GhostMoves.Scatter)
+        self.start_end_game_timeout()
+
+    def is_special_ability_active(self):
+        return self.activated_special_ability
+
+    def set_game_won(self):
+        self.won_game = True
+
+    def get_game_won(self):
+        return self.won_game
+
+    def add_score(self, input_score: PointTypes):
+        """
+        Increase the user's game score based on the point type.
+        :param input_score: PointTypes variable that can increase the score
+        :return: Nothing
+        """
+        self.score += input_score.value
+
+    def get_hero_pos(self):
+        if self.hero is None:
+            return 0, 0
+        return self.hero.get_position()
+
+    def set_curr_mode(self, input_mode: GhostMoves):
+        """
+        Set current mode to the mode being passed in.
+        :param input_mode: GhostMoves variable that dictates what mode the game is in.
+        """
+        self.curr_mode = input_mode
+
+    def get_curr_mode(self):
+        return self.curr_mode
+
     def add_game_object(self, obj: GameObject):
         """
         Add a game object (wall, character, anything else) to the game.
         :param obj: item to add to the game_objects list, from the GameObject class
         """
         self.game_objects.append(obj)
+
+    def get_game_objects(self):
+        return self.game_objects
 
     def add_cookie(self, obj: GameObject):
         """
@@ -189,6 +233,9 @@ class RenderGame:
         self.game_objects.append(obj)
         self.cookies.append(obj)
 
+    def get_cookies(self):
+        return self.cookies
+
     def add_powerup(self, obj: GameObject):
         """
         Appends a new powerup to the list of game objects and powerups.
@@ -197,6 +244,9 @@ class RenderGame:
         """
         self.game_objects.append(obj)
         self.powerups.append(obj)
+
+    def get_powerups(self):
+        return self.powerups
 
     def add_ghost(self, obj: GameObject):
         """
@@ -207,11 +257,48 @@ class RenderGame:
         self.game_objects.append(obj)
         self.ghosts.append(obj)
 
+    def get_ghosts(self):
+        return self.ghosts
+
+    def handle_mode_switch(self):
+        """
+        Find the current mode that the game is running then switch the mode based on the current phase.
+        Set the timer using the timing that the game is going to be running under. 
+        """
+        curr_phase_timings = self.modes[self.curr_phase]
+        print(f"Current Phase: {str(self.curr_phase)}, Current Phase Timings: {str(curr_phase_timings)}")
+        scatter_timing = curr_phase_timings[0]
+        chase_timing = curr_phase_timings[1]
+        if self.curr_mode == GhostMoves.Scatter:
+            self.set_curr_mode(GhostMoves.Chase)
+        else:
+            self.curr_phase += 1
+            self.set_curr_mode(GhostMoves.Scatter)
+
+        used_timing = None
+        if self.curr_mode == GhostMoves.Scatter:
+            used_timing = scatter_timing
+        else:
+            used_timing = chase_timing
+        pygame.time.set_timer(self.mode_switch_event, used_timing * 1000)
+
+
     def handle_events(self):
         """
-        TODO
+        Loop through the events in the game using the pygame.event.get() function and perform
+        a certain action based on the event that happens.
         """
-        pass
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.done_running = True
+            if event.type == self.mode_switch_event:
+                self.handle_mode_switch()
+            if event.type == self.end_event:
+                self.activated_special_ability = False
+            if event.type == self.paku_event:
+                if self.hero is None:
+                    break
+                self.hero.mouth_is_open = not self.hero.mouth_is_open
 
     def add_wall(self, obj):
         """
@@ -227,6 +314,24 @@ class RenderGame:
         :return: walls list
         """
         return self.walls
+
+    def end_game(self):
+        """
+        Removes the hero from the game.
+        """
+        if self.hero in self.game_objects:
+            self.game_objects.remove(self.hero)
+        self.hero = None
+
+    def kill_pacman(self):
+        """
+        Used when the main character dies in the game.
+        """
+        self.lives -= 1
+        self.hero.set_position(32, 32)
+        self.hero.set_direction(Directions.Nothing)
+        if self.lives == 0:
+            self.end_game()
 
     def display_text(self, text, input_position=(32, 0), input_size=30):
         """
