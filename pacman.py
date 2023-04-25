@@ -610,19 +610,72 @@ class Ghost(Movers):
             self.location_queue.append(i)
         self.next_target = self.get_next_location()
 
-    def calc_dir_to_next_target(self):
+    def calc_dir_to_next_target(self) -> Directions:
         """
-        TODO
-        :return:
+        Move the ghost in a direction determined by what mode the game is in and if the
+        special ability is active.
+        :return: Directions variable for ghost to move in.
         """
-        pass
+        if self.next_target is None:
+            if self.renderer.curr_mode == GhostMoves.Scatter and not self.renderer.is_special_ability_active():
+                self.request_path_to_player(self)
+            else:
+                self.game_controller.request_new_random_path(self)
+            return Directions.Nothing
+        x_diff = self.next_target[0] - self.x
+        y_diff = self.next_target[1] - self.y
+        if x_diff == 0:
+            if y_diff > 0:
+                return Directions.Up
+            return Directions.Down
+        if y_diff == 0:
+            if x_diff > 0:
+                return Directions.Right
+            return Directions.Left
+        if self.renderer.curr_mode == GhostMoves.Scatter and not self.renderer.is_special_ability_active():
+            self.request_path_to_player(self)
+        else:
+            self.game_controller.request_new_random_path(self)
+        return Directions.Nothing
 
     def request_path_to_player(self, input_ghost):
         """
-
-        :param input_ghost:
-        :return:
+        Function to get the shortest path from the ghost to the main character and set a path to the main character.
+        :param input_ghost: ghost that will move towards the player
         """
+        player_pos = screen_to_maze(input_ghost.renderer.get_hero_pos())
+        curr_maze_coords = screen_to_maze(input_ghost.get_position())
+        path = self.game_controller.pathfinder.get_path(curr_maze_coords[1], curr_maze_coords[0],
+                                                        player_pos[1], player_pos[0])
+        new_path = []
+        for item in path:
+            new_path.append(maze_to_screen(item))
+        input_ghost.set_new_path(new_path)
+
+    def auto_move(self, input_direction: Directions):
+        """
+        Set the ghost's position based on the direction the ghost is moving in.
+        :param input_direction: direction that the ghost is moving in
+        """
+        if input_direction == Directions.Up:
+            self.set_position(self.x, self.y - 1)
+        elif input_direction == Directions.Down:
+            self.set_position(self.x, self.y + 1)
+        elif input_direction == Directions.Left:
+            self.set_position(self.x - 1, self.y)
+        elif input_direction == Directions.Right:
+            self.set_position(self.x + 1, self.y)
+
+    def draw(self):
+        """
+        Choose an image for the ghost based on whether the special ability is active.
+        Call the parent class' draw function using the current ghost.
+        """
+        if self.renderer.is_special_ability_active():
+            self.image = self.fright_sprite
+        else:
+            self.image = self.normal_sprite
+        super(Ghost, self).draw()
 
 
 class Hero(Movers):
@@ -737,7 +790,7 @@ class Hero(Movers):
         """
         Chooses the image to be drawn onto the screen at the current moment. Calls the
         parent class' draw function to put it onto the screen. Also rotates the image
-        a certain direction based on the direction the character is moving.  
+        a certain direction based on the direction the character is moving.
         """
         if self.mouth_is_open:
             self.image = self.open
