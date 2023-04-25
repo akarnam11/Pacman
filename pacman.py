@@ -56,7 +56,8 @@ def screen_to_maze(input_coords, input_size=32):
 
 class GameObject:
     """
-
+    Class to hold various game objects in the game. Parent class that other instances
+    of the game will inherit from.
     """
     def __init__(self, in_surface, x, y, input_size, input_color=(255,0,0), is_circle=False):
         self.size = input_size
@@ -69,11 +70,14 @@ class GameObject:
         self.shape = pygame.Rect(x, y, input_size, input_size)
 
     def draw(self):
+        """
+        Draws the object onto the game's screen depending on if its a circle or rectangle.
+        """
         if self.circle:  # render the object as either a circle or rectangle
             pygame.draw.circle(self.surface, self.color, self.x, self.y, self.size)
         else:
             rectangle = pygame.Rect(self.x, self.y, self.size, self.size)
-            pygame.draw.rect(self.surface, self.color, rectangle, border_radius=4)
+            pygame.draw.rect(self.surface, self.color, rectangle, border_radius=1)
 
     def tick(self):
         pass
