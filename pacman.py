@@ -557,6 +557,9 @@ class Movers(GameObject):
         pass
 
     def tick(self):
+        """
+        Calls other functions as the time played increases.
+        """
         self.reached_target()
         self.auto_move(self.curr_direction)
 
@@ -567,6 +570,9 @@ class Movers(GameObject):
         pass
 
     def draw(self):
+        """
+        Draws the movable object onto the game's screen.
+        """
         self.image = pygame.transform.scale(self.image, (32, 32))
         self.surface.blit(self.image, self.get_shape())
 
