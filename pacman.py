@@ -344,6 +344,14 @@ class RenderGame:
         if self.lives == 0:
             self.end_game()
 
+    def add_hero(self, input_hero):
+        """
+        Add hero object to the game.
+        :param input_hero: hero object to be added
+        """
+        self.add_game_object(input_hero)
+        self.hero = input_hero
+
     def display_text(self, text, input_position=(32, 0), input_size=30):
         """
         Displays text on the game's screen.
@@ -417,6 +425,7 @@ class GameController:
         ]  # X = wall, P = pac-man, G = ghost
         self.numpy_maze = []  # use to convert maze where 0 is wall and 1 is free space
         self.cookie_spaces = []
+        self.powerup_spaces = []
         self.reachable_spaces = []  # holds the passable parts of the array
         self.ghost_spawns = []
         self.ghost_images = [
@@ -678,8 +687,7 @@ class Hero(Movers):
         then remove that cookie from the screen and game objects, and add points to the game score.
         Loop through the powerups and if the character collides with a powerup,
         remove that powerup from the game objects and increase the game score. Activate the
-        character's special ability. 
-        :return:
+        character's special ability.
         """
         collision_rect = pygame.Rect(self.x, self.y, self.size, self.size)
         renderer = self.renderer
@@ -760,9 +768,22 @@ if __name__ == "__main__":
             if col == 0:
                 rendering.add_wall(WallObject(rendering, x, y, size))
 
+    for cookie_space in game_object.cookie_spaces:
+        translated = maze_to_screen(cookie_space)
+        cookie = Cookies(rendering, translated[0] + size / 2, translated[1] + size / 2)
+        rendering.add_cookie(cookie)
+
+    for power_space in game_object.powerup_spaces:
+        translated = maze_to_screen(power_space)
+        powerup = PowerUp(rendering, translated[0] + size / 2, translated[1] + size / 2)
+        rendering.add_powerup(powerup)
+
     for i, spawn_ghost in enumerate(game_object.ghost_spawns):
         translated = maze_to_screen(spawn_ghost)
         ghost = Ghost(rendering, translated[0], translated[1], size, game_object, game_object.ghost_images[i % 4])
         rendering.add_ghost(ghost)
 
+    pacman = Hero(rendering, size, size, size)
+    rendering.add_hero(pacman)
+    rendering.set_curr_mode(GhostMoves.Scatter)
     rendering.tick(120)
