@@ -714,6 +714,38 @@ class Hero(Movers):
                     renderer.add_score(PointTypes.PowerUp)
                     self.renderer.activate_special_ability()
 
+    def handle_ghosts(self):
+        """
+        Get all the ghosts in the game and if the character collides with any of them,
+        and the special ability is active then remove that ghost from the game. If the
+        special ability is not active, then decrease one of the pacman's lives.
+        """
+        collision_rect = pygame.Rect(self.x, self.y, self.size, self.size)
+        ghosts = self.renderer.get_ghosts()
+        game_objs = self.renderer.get_game_objects()
+        for g in ghosts:
+            collides = collision_rect.colliderect(g.get_shape())
+            if collides and g in game_objs:
+                if self.renderer.is_special_ability_active():
+                    game_objs.remove(g)
+                    self.renderer.add_score(PointTypes.Ghost)
+                else:
+                    if not self.renderer.get_game_won():
+                        self.renderer.kill_pacman()
+
+    def draw(self):
+        """
+        Chooses the image to be drawn onto the screen at the current moment. Calls the
+        parent class' draw function to put it onto the screen. Also rotates the image
+        a certain direction based on the direction the character is moving.  
+        """
+        if self.mouth_is_open:
+            self.image = self.open
+        else:
+            self.image = self.closed
+        self.image = pygame.transform.rotate(self.image, self.curr_direction.value)
+        super(Hero, self).draw()
+
 
 class Cookies(GameObject):
     """
